@@ -57,12 +57,12 @@ const Projects = () => {
               </td>
               <td className="border border-gray-200 px-4 py-2 space-x-2">
                 {!project.completed_at && (
-                  <Link
+                  <button
                     className="bg-blue-500 text-white p-2 rounded"
                     onClick={() => completeProject(project)}
                   >
                     Mark as Completed
-                  </Link>
+                  </button>
                 )}
                 <Link
                   to={`/projects/${project.id}/edit`}
@@ -70,12 +70,12 @@ const Projects = () => {
                 >
                   Edit
                 </Link>
-                <Link
+                <button
                   className="bg-red-500 text-white p-2 rounded"
                   onClick={() => destroyProject(project)}
                 >
                   Destroy
-                </Link>
+                </button>
               </td>
             </tr>
           ))}

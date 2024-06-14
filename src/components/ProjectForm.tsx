@@ -3,29 +3,43 @@ import humanizeString from 'humanize-string';
 import { useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useForm } from "react-hook-form"
-import axios from 'axios';
-const baseURL = process.env.REACT_APP_API_HTTP_ADDRESS
+import axios, { AxiosError }  from '../axiosConfig';
+import { Project, ProjectFormData  } from '../interfaces/ProjectInterface';
+import { Errors  } from '../interfaces/ErrorsInterface';
+import FetchImageAsFile from './FetchImageAsFile';
 
-const ProjectForm = () => {
+const ProjectForm: React.FC = () => {
 
-  const { register, handleSubmit, setValue } = useForm();
-  const params = useParams();
-  const id = params?.id;
+  const { register, handleSubmit, setValue } = useForm<ProjectFormData>();
+  const params = useParams<{ id?: string }>();
+  const id = parseInt(params.id || '');
   const navigate = useNavigate();
-  const [featureImage, setFeatureImage] = useState('');
-  const [errors, setErrors] = useState([]);
+  const [featureImage, setFeatureImage] = useState<File | null>(null);
+  const [errors, setErrors] = useState<Errors>({});
   const queryClient = useQueryClient();
 
   const fetchProjectDetails = async () => {
     try {
-      const response = await axios.get(`/api/projects/${id}`);
-      const completedAtFormatted = new Date(response.data.completed_at).toISOString().slice(0, 16);
-      
-      setFeatureImage(response.data.feature_image_url);
+      const response = await axios.get<Project>(`/api/projects/${id}`);
+      const completed_at = response?.data?.completed_at
+      if(completed_at !== null) {
+        const completedAtFormatted = new Date(response?.data?.completed_at || '').toISOString().slice(0, 16) || '';
+        setValue('completed_at', completedAtFormatted);
+      }
 
       setValue('title', response.data.title);
-      setValue('completedAt', completedAtFormatted);
-      setValue('featureImage', response.data.feature_image_url);
+      const imageUrl = response.data.feature_image_url;
+
+      if (typeof imageUrl === 'string') {
+        const file = await FetchImageAsFile(imageUrl);
+        if (file) {
+          setFeatureImage(file);
+        } else {
+          console.error('Failed to fetch image as file');
+        }
+      } else {
+        console.error('Invalid image URL');
+      }
     } catch (errorOnFetchData) {
       console.error('Error fetching project details:', errorOnFetchData);
     }
@@ -34,25 +48,18 @@ const ProjectForm = () => {
   useEffect(() => {
     if (id) {
       fetchProjectDetails();
+    } else {
+      setValue('featureImage', undefined);
     }
   }, [id]);
 
-  const onSubmit = async (data) => {
+  const onSubmit = async (data: ProjectFormData) => {
     const formData = new FormData();
-    if (data.title) {
-      formData.append('title', data.title);
-    }else{
-      formData.append('title', '');
-    }
-    
-    if (data.completedAt) {
-      formData.append('completed_at', data.completedAt);
-    }else{
-      formData.append('completed_at', '');
-    }
+    formData.append('title', data.title || '');
+    formData.append('completed_at', data.completed_at || '');
 
-    if (data.featureImage && data.featureImage[0] && data.featureImage[0] !== '/' ) {
-      formData.append('feature_image', data.featureImage[0]);
+    if (featureImage) {
+      formData.append('feature_image', featureImage);
     }
 
     if(!id){
@@ -65,7 +72,10 @@ const ProjectForm = () => {
         queryClient.invalidateQueries({ queryKey: ["projects"] });
         navigate('/projects');
       } catch (error) {
-        setErrors(error.response.data)
+        const axiosError = error as AxiosError<Errors>;
+        if (axiosError.response?.data) {
+          setErrors(axiosError.response.data);
+        }
       }
     }else{
       try {
@@ -77,7 +87,10 @@ const ProjectForm = () => {
         queryClient.invalidateQueries({ queryKey: ["projects"] });
         navigate('/projects');
       } catch (error) {
-        setErrors(error.response.data)
+        const axiosError = error as AxiosError<Errors>;
+        if (axiosError.response?.data) {
+          setErrors(axiosError.response.data);
+        }
       }
     }
   };
@@ -110,9 +123,18 @@ const ProjectForm = () => {
         <div className="my-5">
           <label>
             Feature Image:
-            <input type="file" {...register('featureImage')} className="block shadow rounded-md border border-gray-200 outline-none px-3 py-2 mt-2 w-full" />
+            <input
+              type="file"
+              {...register('featureImage')}
+              onChange={(e) => {
+                const file = e.target.files?.[0] || null;
+                setFeatureImage(file);
+                setValue('featureImage', e.target.files ?? null);
+              }}
+              className="block shadow rounded-md border border-gray-200 outline-none px-3 py-2 mt-2 w-full" 
+            />
             {featureImage && (
-              <img src={baseURL + featureImage} alt="Feature Image" className='w-20' />
+              <img src={URL.createObjectURL(featureImage)} alt="" className='w-20' />
             )}
           </label>
         </div>
@@ -120,7 +142,7 @@ const ProjectForm = () => {
         <div className="my-5">
           <label>
             Completed At:
-            <input type="datetime-local" {...register('completedAt')} className="block shadow rounded-md border border-gray-200 outline-none px-3 py-2 mt-2 w-full" />
+            <input type="datetime-local" {...register('completed_at')} className="block shadow rounded-md border border-gray-200 outline-none px-3 py-2 mt-2 w-full" />
           </label>
         </div>
         <button type="submit" className="rounded-lg py-3 px-5 bg-blue-600 text-white inline-block font-medium cursor-pointer">{!id ? 'Create project' : 'Update project'}</button>

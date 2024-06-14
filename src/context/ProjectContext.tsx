@@ -1,57 +1,58 @@
 import React, { createContext, useContext, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import axios from 'axios';
+import axios from '../axiosConfig';
+import { Project, ProjectContextType } from '../interfaces/ProjectInterface';
 
-const ProjectContext = createContext();
+const ProjectContext = createContext<ProjectContextType | undefined>(undefined);
 
 const getProjects = () => {
-  return axios.get('/api/projects').then((response) => response.data);
-}
+  return axios.get<Project[]>('/api/projects').then((response) => response.data);
+};
 
-export const ProjectProvider = ({children}) => {
-  const queryClient = useQueryClient()
-  const { data, isLoading, refetch } = useQuery({ queryKey: ['projects'], queryFn: getProjects })
-
+export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const queryClient = useQueryClient();
+  const { data, isLoading, refetch } = useQuery<Project[]>({ queryKey: ['projects'], queryFn: getProjects });
 
   const projectMutation = useMutation({
-    mutationFn: ({projectId}) => {
+    mutationFn: ({ projectId }: { projectId: number }) => {
       return axios.patch(`/api/projects/${projectId}/mark_as_completed`).then((response) => response.data);
     },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['projects'] })
-    }
-  })
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
+    },
+  });
 
   const destroyMutation = useMutation({
-    mutationFn: ({projectId}) => {
+    mutationFn: async ({ projectId }: { projectId: number }) => {
       if (window.confirm('Are you sure?')) {
-        return axios.delete(`/api/projects/${projectId}`)
+        const response = await axios.delete(`/api/projects/${projectId}`);
+        return response.data;
       }
     },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['projects'] })
-    }
-  })
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
+    },
+  });
 
-  const destroyProject = (project) => {
-    destroyMutation.mutate({projectId: project.id})
-  }
+  const destroyProject = (project: Project) => {
+    destroyMutation.mutate({ projectId: project.id });
+  };
 
-  const completeProject = (project) => {
-    projectMutation.mutate({projectId: project.id})
-  }
+  const completeProject = (project: Project) => {
+    projectMutation.mutate({ projectId: project.id });
+  };
 
   const completedProjectCount = () => {
-    return !isLoading && data.filter((project) => project.completed_at).length;
+    return !isLoading && data ? data.filter((project) => project.completed_at).length : 0;
   };
 
   const getCompletionColor = () => {
     if (isLoading) {
-      return 'gray'; 
+      return 'gray';
     }
 
     const count = completedProjectCount();
-    const completionPercentage = (count / data.length) * 100;
+    const completionPercentage = (count / (data ? data.length : 1)) * 100;
 
     if (completionPercentage < 30) {
       return 'bg-red-500';
@@ -76,8 +77,12 @@ export const ProjectProvider = ({children}) => {
   );
 
   return <ProjectContext.Provider value={value}>{children}</ProjectContext.Provider>;
-}
+};
 
 export const useProjectContext = () => {
-  return useContext(ProjectContext);
+  const context = useContext(ProjectContext);
+  if (!context) {
+    throw new Error('useProjectContext must be used within a ProjectProvider');
+  }
+  return context;
 };

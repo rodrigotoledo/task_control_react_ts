@@ -1,20 +1,22 @@
-// Navbar.js
 import React, { useEffect } from 'react';
 import { FaBriefcase, FaTasks, FaCheckDouble } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import { useTaskContext } from '../context/TaskContext';
 import { useProjectContext } from '../context/ProjectContext';
-import { useRefreshOnFocus } from '../hooks/useRefreshOnFocus';
+import { useRefreshOnFocus } from '../hooks/useRefreshOnFocus'
+import { TaskContextType }  from '../interfaces/TaskInterface';
+import { ProjectContextType }  from '../interfaces/ProjectInterface';
+import { NavbarProps } from '../interfaces/NavbarInterface';
 
 
-const Navbar = () => {
-  const { completedTaskCount, tasksColor, refetchTasks } = useTaskContext();
+const Navbar: React.FC<NavbarProps> = () => {
+  const { completedTaskCount, tasksColor, refetchTasks } = useTaskContext() as TaskContextType; // Use as TaskContextType
   const countCompletedTask = completedTaskCount();
-  const tasksColorTheme = tasksColor()
+  const tasksColorTheme = tasksColor();
 
-  const { completedProjectCount, projectsColor, refetchProjects } = useProjectContext();
+  const { completedProjectCount, projectsColor, refetchProjects } = useProjectContext() as ProjectContextType; // Use as ProjectContextType
   const countCompletedProject = completedProjectCount();
-  const projectsColorTheme = projectsColor()
+  const projectsColorTheme = projectsColor();
 
   useRefreshOnFocus(refetchTasks);
   useRefreshOnFocus(refetchProjects);

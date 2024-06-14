@@ -1,4 +1,4 @@
-// src/components/Tasks.js
+// src/components/Tasks.jsx
 import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useTaskContext } from '../context/TaskContext';

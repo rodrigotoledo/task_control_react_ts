@@ -9,6 +9,7 @@ export interface ProjectContextType {
   projects: Project[] | undefined;
   isLoadingProjects: boolean;
   refetchProjects: () => Promise<any>;
+  setSearchQuery: (query: string) => void;
   markAsCompleted: (project: Project) => void;
   markAsIncompleted: (project: Project) => void;
   destroyProject: (project: Project) => void;

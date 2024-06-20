@@ -1,17 +1,18 @@
-import React, { createContext, useContext, useMemo } from 'react';
+import React, { useState, createContext, useContext, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from '../axiosConfig';
 import { Project, ProjectContextType } from '../interfaces/ProjectInterface';
 
 const ProjectContext = createContext<ProjectContextType | undefined>(undefined);
 
-const getProjects = () => {
-  return axios.get<Project[]>('/api/projects').then((response) => response.data);
+const getProjects = (query: string) => {
+  return axios.get<Project[]>(`/api/projects`, { params: { query } }).then((response) => response.data);
 };
 
 export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const queryClient = useQueryClient();
-  const { data, isLoading, refetch } = useQuery<Project[]>({ queryKey: ['projects'], queryFn: getProjects });
+  const [searchQuery, setSearchQuery] = useState('');
+  const { data, isLoading, refetch } = useQuery<Project[]>({ queryKey: ['projects', searchQuery], queryFn: () => getProjects(searchQuery) });
 
   const projectCompleteMutation = useMutation({
     mutationFn: ({ projectId }: { projectId: number }) => {
@@ -80,7 +81,8 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
     () => ({
       projects: data,
       isLoadingProjects: isLoading,
-      refetchProjects: refetch,
+      setSearchQuery,
+      refetchProjects: () => refetch(),
       markAsCompleted,
       markAsIncompleted,
       destroyProject,

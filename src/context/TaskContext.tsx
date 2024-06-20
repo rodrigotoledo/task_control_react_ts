@@ -1,17 +1,18 @@
-import React, { createContext, useContext, useMemo } from 'react';
+import React, { useState, createContext, useContext, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from '../axiosConfig';
 import { Task, TaskContextType } from '../interfaces/TaskInterface';
 
 const TaskContext = createContext<TaskContextType | undefined>(undefined);
 
-const getTasks = () => {
-  return axios.get<Task[]>('/api/tasks').then((response) => response.data);
+const getTasks = (query: string) => {
+  return axios.get<Task[]>(`/api/tasks`, { params: { query } }).then((response) => response.data);
 };
 
 export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const queryClient = useQueryClient();
-  const { data, isLoading, refetch } = useQuery<Task[]>({ queryKey: ['tasks'], queryFn: getTasks });
+  const [searchQuery, setSearchQuery] = useState('');
+  const { data, isLoading, refetch } = useQuery<Task[]>({ queryKey: ['tasks', searchQuery], queryFn: () => getTasks(searchQuery) });
 
   const taskCompleteMutation = useMutation({
     mutationFn: ({ taskId }: { taskId: number }) => {
@@ -81,7 +82,8 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
     () => ({
       tasks: data,
       isLoadingTasks: isLoading,
-      refetchTasks: refetch,
+      setSearchQuery,
+      refetchTasks: () => refetch(),
       markAsCompleted,
       markAsIncompleted,
       destroyTask,

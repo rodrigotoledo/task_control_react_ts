@@ -11,6 +11,7 @@ export interface TaskContextType {
   tasks: Task[] | undefined;
   isLoadingTasks: boolean;
   refetchTasks: () => Promise<any>;
+  setSearchQuery: (query: string) => void;
   markAsCompleted: (task: Task) => void;
   markAsIncompleted: (task: Task) => void;
   destroyTask: (task: Task) => void;

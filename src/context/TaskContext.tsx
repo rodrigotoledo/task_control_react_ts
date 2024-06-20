@@ -13,9 +13,18 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const queryClient = useQueryClient();
   const { data, isLoading, refetch } = useQuery<Task[]>({ queryKey: ['tasks'], queryFn: getTasks });
 
-  const taskMutation = useMutation({
+  const taskCompleteMutation = useMutation({
     mutationFn: ({ taskId }: { taskId: number }) => {
       return axios.patch(`/api/tasks/${taskId}/mark_as_completed`).then((response) => response.data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+    },
+  });
+
+  const taskIncompleteMutation = useMutation({
+    mutationFn: ({ taskId }: { taskId: number }) => {
+      return axios.patch(`/api/tasks/${taskId}/mark_as_incompleted`).then((response) => response.data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
@@ -39,8 +48,12 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
     destroyMutation.mutate({ taskId: task.id });
   };
 
-  const completeTask = (task: Task) => {
-    taskMutation.mutate({ taskId: task.id });
+  const markAsCompleted = (task: Task) => {
+    taskCompleteMutation.mutate({ taskId: task.id });
+  };
+
+  const markAsIncompleted = (task: Task) => {
+    taskIncompleteMutation.mutate({ taskId: task.id });
   };
 
   const completedTaskCount = () => {
@@ -69,12 +82,13 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
       tasks: data,
       isLoadingTasks: isLoading,
       refetchTasks: refetch,
-      completeTask,
+      markAsCompleted,
+      markAsIncompleted,
       destroyTask,
       completedTaskCount,
       tasksColor: getCompletionColor,
     }),
-    [data, isLoading, refetch, taskMutation, destroyMutation]
+    [data, isLoading, refetch, markAsCompleted, markAsIncompleted , destroyMutation]
   );
 
   return <TaskContext.Provider value={value}>{children}</TaskContext.Provider>;

@@ -11,7 +11,8 @@ export interface TaskContextType {
   tasks: Task[] | undefined;
   isLoadingTasks: boolean;
   refetchTasks: () => Promise<any>;
-  completeTask: (task: Task) => void;
+  markAsCompleted: (task: Task) => void;
+  markAsIncompleted: (task: Task) => void;
   destroyTask: (task: Task) => void;
   completedTaskCount: () => number;
   tasksColor: () => string;

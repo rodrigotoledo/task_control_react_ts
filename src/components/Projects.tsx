@@ -6,7 +6,7 @@ import { useRefreshOnFocus } from '../hooks/useRefreshOnFocus';
 const baseURL = process.env.REACT_APP_API_HTTP_ADDRESS
 
 const Projects = () => {
-  const { projects, completeProject, destroyProject, isLoadingProjects, refetchProjects } = useProjectContext();
+  const { projects, markAsCompleted, markAsIncompleted, destroyProject, isLoadingProjects, refetchProjects } = useProjectContext();
   
   useRefreshOnFocus(refetchProjects);
 
@@ -56,12 +56,19 @@ const Projects = () => {
                 )}
               </td>
               <td className="border border-gray-200 px-4 py-2 space-x-2">
-                {!project.completed_at && (
+                {!project.completed_at ? (
                   <button
                     className="bg-blue-500 text-white p-2 rounded"
-                    onClick={() => completeProject(project)}
+                    onClick={() => markAsCompleted(project)}
                   >
                     Mark as Completed
+                  </button>
+                 ) : (
+                  <button
+                    className="bg-red-500 text-white p-2 rounded"
+                    onClick={() => markAsIncompleted(project)}
+                  >
+                    Mark as Incomplete
                   </button>
                 )}
                 <Link

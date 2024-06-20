@@ -9,7 +9,8 @@ export interface ProjectContextType {
   projects: Project[] | undefined;
   isLoadingProjects: boolean;
   refetchProjects: () => Promise<any>;
-  completeProject: (project: Project) => void;
+  markAsCompleted: (project: Project) => void;
+  markAsIncompleted: (project: Project) => void;
   destroyProject: (project: Project) => void;
   completedProjectCount: () => number;
   projectsColor: () => string;
@@ -20,4 +21,8 @@ export interface ProjectFormData {
   completed_at: string;
   feature_image_url: string;
   featureImage?: FileList | null;
+}
+
+export interface ProjectButtonProps {
+  project: Project;
 }

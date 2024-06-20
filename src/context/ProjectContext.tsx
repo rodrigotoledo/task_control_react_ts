@@ -13,9 +13,18 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const queryClient = useQueryClient();
   const { data, isLoading, refetch } = useQuery<Project[]>({ queryKey: ['projects'], queryFn: getProjects });
 
-  const projectMutation = useMutation({
+  const projectCompleteMutation = useMutation({
     mutationFn: ({ projectId }: { projectId: number }) => {
       return axios.patch(`/api/projects/${projectId}/mark_as_completed`).then((response) => response.data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
+    },
+  });
+
+  const projectIncompleteMutation = useMutation({
+    mutationFn: ({ projectId }: { projectId: number }) => {
+      return axios.patch(`/api/projects/${projectId}/mark_as_incompleted`).then((response) => response.data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['projects'] });
@@ -38,8 +47,12 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
     destroyMutation.mutate({ projectId: project.id });
   };
 
-  const completeProject = (project: Project) => {
-    projectMutation.mutate({ projectId: project.id });
+  const markAsCompleted = (project: Project) => {
+    projectCompleteMutation.mutate({ projectId: project.id });
+  };
+
+  const markAsIncompleted = (project: Project) => {
+    projectIncompleteMutation.mutate({ projectId: project.id });
   };
 
   const completedProjectCount = () => {
@@ -68,12 +81,13 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
       projects: data,
       isLoadingProjects: isLoading,
       refetchProjects: refetch,
-      completeProject,
+      markAsCompleted,
+      markAsIncompleted,
       destroyProject,
       completedProjectCount,
       projectsColor: getCompletionColor,
     }),
-    [data, isLoading, refetch, projectMutation, destroyMutation]
+    [data, isLoading, refetch, markAsCompleted, markAsIncompleted, destroyMutation]
   );
 
   return <ProjectContext.Provider value={value}>{children}</ProjectContext.Provider>;

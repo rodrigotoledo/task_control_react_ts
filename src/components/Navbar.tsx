@@ -7,6 +7,7 @@ import { useRefreshOnFocus } from '../hooks/useRefreshOnFocus'
 import { TaskContextType }  from '../interfaces/TaskInterface';
 import { ProjectContextType }  from '../interfaces/ProjectInterface';
 import { NavbarProps } from '../interfaces/NavbarInterface';
+import GeneralSearchForm from './GeneralSearchForm';
 
 
 const Navbar: React.FC<NavbarProps> = () => {
@@ -35,16 +36,17 @@ const Navbar: React.FC<NavbarProps> = () => {
         <Link to="/" className="text-lg font-bold">
           <FaCheckDouble className='w-10 h-10 m-2' />
         </Link>
+        <GeneralSearchForm />
         <div className="flex space-x-4">
           <Link to="/tasks" className="flex items-center space-x-2">
             <FaTasks className="mr-2" />
             Tasks
-            <span className={`rounded-full ${tasksColorTheme} text-white w-8 h-8 font-bold items-center justify-center flex`}>{countCompletedTask}</span>
+            <span className={`rounded-full ${tasksColorTheme} text-white w-10 h-10 font-bold items-center justify-center flex`}>{countCompletedTask}</span>
           </Link>
           <Link to="/projects" className="flex items-center space-x-2">
             <FaBriefcase className="mr-2" />
             Projects
-            <span className={`rounded-full ${projectsColorTheme} text-white w-8 h-8 font-bold text-center items-center justify-center flex`}>{countCompletedProject}</span>
+            <span className={`rounded-full ${projectsColorTheme} text-white w-10 h-10 font-bold text-center items-center justify-center flex`}>{countCompletedProject}</span>
           </Link>
         </div>
       </div>
